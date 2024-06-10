@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Playlist</title>
+</head>
+<body>
+    <h1>Select a Spotify Playlist</h1>
+    <form action="/convert-playlist" method="post">
+        <select name="playlist_id">
+            {% for playlist in playlists %}
+                <option value="{{ playlist.id }}">{{ playlist.name }}</option>
+            {% endfor %}
+        </select>
+        <!-- Accessing playlist name and description within the loop -->
+        {% for playlist in playlists %}
+            <input type="hidden" name="playlist_title" value="{{ playlist.name }}">
+            <input type="hidden" name="playlist_description" value="{{ playlist.description }}">
+        {% endfor %}
+        <button type="submit">Convert to YouTube Playlist</button>
+    </form>
+</body>
+</html>
