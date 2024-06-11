@@ -1,12 +1,31 @@
 stages:
+    - decrypt
     - test
     - build
     - deploy
 
+decrypt_env:
+  stage: decrypt
+  image: alpine:latest  # Use a lightweight image with GPG installed
+  before_script:
+    - apk update && apk add gnupg  # Install GPG
+  script:
+    - gpg --batch --yes --decrypt --passphrase="$GPG_PASSPHRASE" -o .env .env.gpg
+  artifacts:
+    paths:
+      - .env  # Make the .env file available to subsequent stages
+
+# Run tests using the decrypted .env file
 run_tests:
-    stage: test
-    image: python:3.9
-    before_script:
-        - pip install -r requirements.txt
-    script:
-        - python -m pytest
+  stage: test
+  image: python:3.9
+  dependencies:
+    - decrypt_env
+  before_script:
+    - pip install -r requirements.txt
+    - source .env  # Source the decrypted .env file
+  script:
+    - python -m pytest
+
+variables:
+  GPG_PASSPHRASE: $GPG_PASSPHRASE
