@@ -21,12 +21,24 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' #"to solve the http error occuri
 
 #Spotify API credentials
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFYCLIENTID")
+print("running")
 print(SPOTIFY_CLIENT_ID)
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFYCLIENTSECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFYREDIRECTURI")
 
 #YouTube API credentials
-CLIENT_SECRETS_FILE = "client_secret_web_2.json"
+# CLIENT_SECRETS_FILE = "client_secret_web_2.json"
+CLIENT_SECRETS = {
+    "web": {
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "redirect_uris": [os.getenv("GOOGLE_REDIRECT_URI")]
+    }
+}
 SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 API_SERVICE_NAME = "youtube"
 API_VERSION = "v3"
@@ -64,8 +76,8 @@ def select_playlist():
 
 @app.route('/authenticate-google')
 def authenticate_google():
-    flow = InstalledAppFlow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, SCOPES)
+    flow = InstalledAppFlow.from_client_config(
+        CLIENT_SECRETS, SCOPES)
     flow.redirect_uri = url_for('callback_google', _external=True)
     authorization_url, state = flow.authorization_url(
         access_type='offline',
@@ -79,16 +91,15 @@ def callback_google():
     state = request.args.get('state')
     if state != session.get('state'):
         raise Exception('Invalid state')
-    
-    flow = InstalledAppFlow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, SCOPES, state=state)
+
+    flow = InstalledAppFlow.from_client_config(
+        CLIENT_SECRETS, SCOPES, state=state)
     flow.redirect_uri = url_for('callback_google', _external=True)
     authorization_response = request.url
     flow.fetch_token(authorization_response=authorization_response)
     credentials = flow.credentials
     session['credentials'] = credentials_to_dict(credentials)
     return redirect(url_for('convert_playlist'))
-
 def credentials_to_dict(credentials):
     return {
         'token': credentials.token,
@@ -228,4 +239,4 @@ def convert_playlist():
     return "Playlist converted successfully yeeeeeeee!!!!"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000,debug=True)
